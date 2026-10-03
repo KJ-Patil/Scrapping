@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Distribution
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Byte-compiled
+*.pyc
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Raw data (keep results CSVs, ignore large raw files)
+*.json
+!relu_challenge/obj1_disney/sample_product.json

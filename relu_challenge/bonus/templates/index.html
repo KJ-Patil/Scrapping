@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReLU Data Scraping Challenge</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="header">
+    <h1>ReLU Data Scraping Challenge</h1>
+    <p>Disney Cruise Listings &amp; Ingredients Network Companies</p>
+</div>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('disney')">Disney Cruises</button>
+        <button class="tab-btn" onclick="switchTab('ingredients')">Ingredients Companies</button>
+        <button class="tab-btn upload-btn" onclick="document.getElementById('csvFileInput').click()">Import CSV</button>
+        <button class="tab-btn clear-all-btn" onclick="clearAll()">Clear</button>
+        <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCSVUpload(event)">
+    </div>
+
+    <div id="uploadBanner" class="upload-banner" style="display:none;">
+        <span id="uploadFilename"></span>
+        <button class="close-upload" onclick="closeUploadView()">Back to datasets</button>
+    </div>
+
+    <div id="statsCards" class="stats-cards" style="display:none;">
+        <h3 class="stats-title">Objective 1 — Disney Cruise Insights</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-question">Pacific as destination</div>
+                <div class="stat-value" id="statPacific">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">Total cruises</div>
+                <div class="stat-value" id="statTotal">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">Holiday cruises</div>
+                <div class="stat-value" id="statHoliday">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">More than 2 booking dates</div>
+                <div class="stat-value" id="statDates">—</div>
+            </div>
+            <div class="stat-card stat-card-wide">
+                <div class="stat-question">Miami &amp; London departures</div>
+                <div class="stat-value"><span id="statMiami">—</span> Miami &nbsp;|&nbsp; <span id="statLondon">—</span> London</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="statsCardsIngredients" class="stats-cards" style="display:none;">
+        <h3 class="stats-title">Objective 2 — Ingredients Network Insights</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-question">Total ingredients companies</div>
+                <div class="stat-value" id="statIngTotal">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">Finished products companies</div>
+                <div class="stat-value" id="statIngFinished">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">Herbs &amp; Spices companies</div>
+                <div class="stat-value" id="statIngHerbs">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">Physical delivery formats</div>
+                <div class="stat-value" id="statIngDelivery">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-question">Cognitive &amp; Mental Health</div>
+                <div class="stat-value" id="statIngCognitive">—</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="search-wrapper">
+            <input type="text" class="search-box" id="searchInput" placeholder="Search across all columns..." oninput="debounceSearch()">
+            <button class="clear-btn" id="clearBtn" onclick="clearSearch()" style="display:none;">&times;</button>
+        </div>
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <div class="table-wrapper">
+        <div id="loadingIndicator" class="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
+        </div>
+        <table id="dataTable" style="display:none;">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div id="noData" class="no-data" style="display:none;">No results found.</div>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+    let currentTab = 'disney';
+    let currentPage = 1;
+    let searchTimeout = null;
+    const perPage = 20;
+
+    let uploadedData = null;
+    let uploadedColumns = null;
+    let uploadedFilename = null;
+
+    const DISNEY_COLUMNS = [
+        'Title', 'Ship', 'Departing From', 'Duration', 'Destination',
+        'Geo Area', 'Itinerary (Ports of Call)', 'Sailing ID', 'Package Code',
+        'Interior Price', 'Oceanview Price', 'Verandah Price', 'Suite Price',
+        'Number of Dates', 'Available', 'Tags'
+    ];
+
+    const INGREDIENTS_COLUMNS = [
+        'Company Name', 'Company Description', 'Sales Markets',
+        'Primary Business Activity', 'Categories', 'Events',
+        'Address', 'Email', 'Telephone', 'Website'
+    ];
+
+    function switchTab(tab) {
+        currentTab = tab;
+        currentPage = 1;
+        uploadedData = null;
+        uploadedColumns = null;
+        uploadedFilename = null;
+        document.getElementById('uploadBanner').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('csvFileInput').value = '';
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        updateStatsVisibility();
+        fetchData();
+    }
+
+    function updateStatsVisibility() {
+        document.getElementById('statsCards').style.display = currentTab === 'disney' ? 'block' : 'none';
+        document.getElementById('statsCardsIngredients').style.display = currentTab === 'ingredients' ? 'block' : 'none';
+    }
+
+    async function fetchDisneyStats() {
+        try {
+            const response = await fetch('/api/disney/stats');
+            const s = await response.json();
+            document.getElementById('statPacific').textContent = s.pacific_cruises;
+            document.getElementById('statTotal').textContent = s.total_cruises;
+            document.getElementById('statHoliday').textContent = s.holiday_cruises;
+            document.getElementById('statDates').textContent = s.more_than_2_dates;
+            document.getElementById('statMiami').textContent = s.miami_departures;
+            document.getElementById('statLondon').textContent = s.london_departures;
+            document.getElementById('statsCards').style.display = 'block';
+        } catch (err) {
+            document.getElementById('statsCards').style.display = 'none';
+        }
+    }
+
+    async function fetchIngredientsStats() {
+        try {
+            const response = await fetch('/api/ingredients/stats');
+            const s = await response.json();
+            document.getElementById('statIngTotal').textContent = s.total_ingredients;
+            document.getElementById('statIngFinished').textContent = s.finished_products;
+            document.getElementById('statIngHerbs').textContent = s.herbs_spices;
+            document.getElementById('statIngDelivery').textContent = s.delivery_formats;
+            document.getElementById('statIngCognitive').textContent = s.cognitive_mental;
+        } catch (err) {
+            document.getElementById('statsCardsIngredients').style.display = 'none';
+        }
+    }
+
+    async function handleCSVUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('dataTable').style.display = 'none';
+        document.getElementById('noData').style.display = 'none';
+        document.getElementById('pagination').innerHTML = '';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload-csv', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.error) {
+                document.getElementById('noData').textContent = result.error;
+                document.getElementById('noData').style.display = 'block';
+                document.getElementById('loadingIndicator').style.display = 'none';
+                return;
+            }
+
+            uploadedData = result.data;
+            uploadedColumns = result.columns;
+            uploadedFilename = result.filename;
+            currentTab = 'uploaded';
+            currentPage = 1;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('uploadBanner').style.display = 'flex';
+            document.getElementById('uploadFilename').textContent = 'Imported: ' + result.filename + ' (' + result.total + ' records)';
+            document.getElementById('searchInput').value = '';
+
+            renderUploadedData();
+        } catch (err) {
+            document.getElementById('noData').textContent = 'Error uploading file. Please try again.';
+            document.getElementById('noData').style.display = 'block';
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    }
+
+    function renderUploadedData() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        let filtered = uploadedData;
+        if (search) {
+            filtered = uploadedData.filter(row =>
+                Object.values(row).some(v => String(v).toLowerCase().includes(search))
+            );
+        }
+        const total = filtered.length;
+        const start = (currentPage - 1) * perPage;
+        const pageData = filtered.slice(start, start + perPage);
+
+        renderTableWithColumns(pageData, uploadedColumns);
+        renderPagination(total);
+        document.getElementById('stats').textContent =
+            `Showing ${pageData.length} of ${total} records (Page ${currentPage})`;
+    }
+
+    function closeUploadView() {
+        uploadedData = null;
+        uploadedColumns = null;
+        uploadedFilename = null;
+        currentTab = 'disney';
+        currentPage = 1;
+        document.getElementById('uploadBanner').style.display = 'none';
+        document.getElementById('csvFileInput').value = '';
+        document.getElementById('searchInput').value = '';
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.tab-btn').classList.add('active');
+
+        fetchData();
+    }
+
+    function debounceSearch() {
+        const val = document.getElementById('searchInput').value;
+        document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            if (currentTab === 'uploaded') {
+                renderUploadedData();
+            } else {
+                fetchData();
+            }
+        }, 400);
+    }
+
+    function clearAll() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('clearBtn').style.display = 'none';
+        document.getElementById('csvFileInput').value = '';
+        uploadedData = null;
+        uploadedColumns = null;
+        uploadedFilename = null;
+        currentTab = 'none';
+        currentPage = 1;
+
+        document.getElementById('uploadBanner').style.display = 'none';
+        document.getElementById('statsCards').style.display = 'none';
+        document.getElementById('statsCardsIngredients').style.display = 'none';
+        document.getElementById('dataTable').style.display = 'none';
+        document.getElementById('loadingIndicator').style.display = 'none';
+        document.getElementById('noData').style.display = 'none';
+        document.getElementById('pagination').innerHTML = '';
+        document.getElementById('stats').textContent = '';
+        document.getElementById('tableHead').innerHTML = '';
+        document.getElementById('tableBody').innerHTML = '';
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('clearBtn').style.display = 'none';
+        currentPage = 1;
+        if (currentTab === 'uploaded') {
+            renderUploadedData();
+        } else {
+            fetchData();
+        }
+    }
+
+    async function fetchData() {
+        const search = document.getElementById('searchInput').value;
+        const endpoint = currentTab === 'disney' ? '/api/disney' : '/api/ingredients';
+        const url = `${endpoint}?page=${currentPage}&per_page=${perPage}&search=${encodeURIComponent(search)}`;
+
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('dataTable').style.display = 'none';
+        document.getElementById('noData').style.display = 'none';
+        document.getElementById('pagination').innerHTML = '';
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+            const columns = currentTab === 'disney' ? DISNEY_COLUMNS : INGREDIENTS_COLUMNS;
+            renderTableWithColumns(result.data, columns);
+            renderPagination(result.total);
+            document.getElementById('stats').textContent =
+                `Showing ${result.data.length} of ${result.total} records (Page ${result.page})`;
+        } catch (err) {
+            document.getElementById('noData').textContent = 'Error loading data. Please try again.';
+            document.getElementById('noData').style.display = 'block';
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    }
+
+    function renderTableWithColumns(data, columns) {
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        const table = document.getElementById('dataTable');
+        const noData = document.getElementById('noData');
+
+        thead.innerHTML = '<tr>' + columns.map(col => `<th>${escapeHtml(col)}</th>`).join('') + '</tr>';
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+            table.style.display = 'none';
+            noData.textContent = 'No results found.';
+            noData.style.display = 'block';
+            return;
+        }
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            columns.forEach(col => {
+                const td = document.createElement('td');
+                const value = row[col] || 'N/A';
+                td.textContent = value;
+                td.title = value;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+
+        table.style.display = 'table';
+        noData.style.display = 'none';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function renderPagination(total) {
+        const totalPages = Math.ceil(total / perPage);
+        const container = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
+        html += `<span class="page-info">Page ${currentPage} of ${totalPages}</span>`;
+        html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`;
+
+        container.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        if (currentTab === 'uploaded') {
+            renderUploadedData();
+        } else {
+            fetchData();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    fetchData();
+    fetchDisneyStats();
+    fetchIngredientsStats();
+</script>
+
+</body>
+</html>

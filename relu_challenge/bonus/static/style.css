@@ -1,0 +1,351 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+}
+
+.header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.header p {
+    margin-top: 6px;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: #fff;
+    color: #555;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.tab-btn.active {
+    background: #0f3460;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(15, 52, 96, 0.3);
+}
+
+.tab-btn:hover:not(.active) {
+    background: #e8eaf0;
+}
+
+.tab-btn.upload-btn {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 2px dashed #4caf50;
+    margin-left: auto;
+}
+
+.tab-btn.upload-btn:hover {
+    background: #c8e6c9;
+}
+
+.tab-btn.clear-all-btn {
+    background: #fce4ec;
+    color: #c62828;
+    border: 2px solid #ef9a9a;
+}
+
+.tab-btn.clear-all-btn:hover {
+    background: #ef9a9a;
+    color: #fff;
+}
+
+.upload-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    color: #1565c0;
+    font-weight: 600;
+}
+
+.close-upload {
+    padding: 6px 16px;
+    border: 1px solid #90caf9;
+    border-radius: 6px;
+    background: #fff;
+    color: #1565c0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.close-upload:hover {
+    background: #1565c0;
+    color: #fff;
+}
+
+.stats-cards {
+    margin-bottom: 20px;
+}
+
+.stats-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-left: 4px solid #0f3460;
+}
+
+.stat-card-wide {
+    grid-column: span 2;
+    border-left-color: #e65100;
+}
+
+.stat-question {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f3460;
+}
+
+.stat-card-wide .stat-value {
+    font-size: 1.2rem;
+    color: #e65100;
+}
+
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat-card-wide { grid-column: span 2; }
+    .stat-value { font-size: 1.3rem; }
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.search-box {
+    padding: 10px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 320px;
+    max-width: 100%;
+    transition: border-color 0.2s;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
+}
+
+.search-wrapper .search-box {
+    width: 100%;
+    padding-right: 36px;
+}
+
+.clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: #999;
+    cursor: pointer;
+    padding: 0 6px;
+    line-height: 1;
+}
+
+.clear-btn:hover {
+    color: #333;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: #0f3460;
+}
+
+.stats {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+thead th {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 14px 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+    background: #f8f9fb;
+}
+
+tbody tr:hover {
+    background: #e8edf5;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 16px 0;
+}
+
+.page-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #0f3460;
+    color: #fff;
+    border-color: #0f3460;
+}
+
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 0.85rem;
+    color: #666;
+    padding: 0 12px;
+}
+
+.loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+}
+
+.spinner {
+    border: 3px solid #f0f0f0;
+    border-top: 3px solid #0f3460;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .header h1 { font-size: 1.3rem; }
+    .tabs { flex-wrap: wrap; }
+    .search-box { width: 100%; }
+    .controls { flex-direction: column; align-items: stretch; }
+    tbody td { font-size: 0.8rem; padding: 8px; }
+}
