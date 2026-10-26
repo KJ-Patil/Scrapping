@@ -135,10 +135,7 @@ async def get_ingredients_stats():
     csv_path = CHALLENGE_DIR / "obj2_ingredients" / "ingredients_network_results.csv"
     all_rows = read_csv_file(csv_path)
 
-    total_ingredients = sum(
-        1 for r in all_rows
-        if "ingredient" in r.get("Primary Business Activity", "").lower()
-    )
+    total_ingredients = len(all_rows)
     finished_products = sum(
         1 for r in all_rows
         if "finished" in r.get("Primary Business Activity", "").lower()

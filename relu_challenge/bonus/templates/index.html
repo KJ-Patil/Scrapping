@@ -257,6 +257,7 @@
     function debounceSearch() {
         const val = document.getElementById('searchInput').value;
         document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
+        if (currentTab === 'cleared') return;
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             currentPage = 1;
@@ -269,15 +270,15 @@
     }
 
     function clearAll() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('clearBtn').style.display = 'none';
-        document.getElementById('csvFileInput').value = '';
+        currentTab = 'cleared';
+        currentPage = 1;
         uploadedData = null;
         uploadedColumns = null;
         uploadedFilename = null;
-        currentTab = 'none';
-        currentPage = 1;
 
+        document.getElementById('searchInput').value = '';
+        document.getElementById('clearBtn').style.display = 'none';
+        document.getElementById('csvFileInput').value = '';
         document.getElementById('uploadBanner').style.display = 'none';
         document.getElementById('statsCards').style.display = 'none';
         document.getElementById('statsCardsIngredients').style.display = 'none';
@@ -304,6 +305,7 @@
     }
 
     async function fetchData() {
+        if (currentTab === 'cleared') return;
         const search = document.getElementById('searchInput').value;
         const endpoint = currentTab === 'disney' ? '/api/disney' : '/api/ingredients';
         const url = `${endpoint}?page=${currentPage}&per_page=${perPage}&search=${encodeURIComponent(search)}`;
